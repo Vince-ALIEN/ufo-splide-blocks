@@ -1,0 +1,41 @@
+
+
+.wp-block-ufo-splide-slider {
+  .splide {
+    &__track {
+      overflow: hidden;
+    }
+
+    &__list {
+      display: flex;
+    }
+
+    &__slide {
+      flex: 0 0 100%;
+
+      img {
+        width: 100%;
+        height: auto;
+      }
+    }
+  }
+}
+
+.splide__arrow svg {
+  fill: var(--color-foreground);
+  height: auto;
+  transition: fill 0.1slinear;
+  width: 1.5rem;
+}
+
+.splide__arrow:hover svg {
+  fill: var(--color-primary);
+}
+
+.splide__pagination__page {
+  background: #ccc;
+}
+
+.splide__pagination__page.is-active {
+  background: var(--wp--preset--color--primary);
+}

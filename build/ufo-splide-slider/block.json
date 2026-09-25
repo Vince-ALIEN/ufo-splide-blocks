@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "create-block/ufo-splide-slider",
+  "version": "0.1.8",
+  "title": "Ufo Splide Slider",
+  "category": "design",
+  "icon": "slides",
+  "description": "Displays Content in a Slider",
+  "attributes": {
+    "autoplay": {
+      "type": "boolean",
+      "default": false
+    },
+    "navigation": {
+      "type": "boolean",
+      "default": true
+    },
+    "pagination": {
+      "type": "boolean",
+      "default": true
+    },
+    "slidesPerView": {
+      "type": "number",
+      "default": 1
+    },
+    "fadeEffect": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "dimensions": {
+      "minHeight": true
+    }
+  },
+  "textdomain": "ufo-splide-blocks",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": [
+    "file:./style-index.css",
+    "file:./frontend.css"
+  ],
+  "script": "file:./frontend.js"
+}

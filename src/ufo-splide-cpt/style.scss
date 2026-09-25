@@ -1,0 +1,30 @@
+.wp-block-create-block-ufo-splide-cpt {
+  .splide__slide article img {
+    object-fit: cover;
+  }
+}
+
+.splide__arrow:hover svg {
+  fill: var(--color-secondary);
+}
+
+.splide__pagination__page {
+  background: #ccc;
+}
+
+.splide__pagination__page.is-active {
+  background: var(--color-secondary);
+}
+
+.visually-hidden,
+.splide__live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

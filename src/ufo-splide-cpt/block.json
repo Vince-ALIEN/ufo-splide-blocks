@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "create-block/ufo-splide-cpt",
+  "version": "0.1.8",
+  "title": "Ufo Splide Posts",
+  "category": "widgets",
+  "icon": "slides",
+  "description": "Slider de publications ou de Custom Post Types avec appel à l'action configurable.",
+  "attributes": {
+    "autoplay": {
+      "type": "boolean",
+      "default": true
+    },
+    "navigation": {
+      "type": "boolean",
+      "default": true
+    },
+    "pagination": {
+      "type": "boolean",
+      "default": true
+    },
+    "slidesPerView": {
+      "type": "number",
+      "default": 1
+    },
+    "postsToShow": {
+      "type": "number",
+      "default": 5
+    },
+    "postType": {
+      "type": "string",
+      "default": "post"
+    },
+    "selectedTaxonomy": {
+      "type": "string",
+      "default": ""
+    },
+    "selectedTerms": {
+      "type": "array",
+      "default": []
+    },
+    "showDate": {
+      "type": "boolean",
+      "default": true
+    },
+    "showCategory": {
+      "type": "boolean",
+      "default": true
+    },
+    "ctaText": {
+      "type": "string",
+      "default": "En savoir plus"
+    },
+    "ctaBackgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaTextColor": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"]
+  },
+  "textdomain": "ufo-splide-cpt",
+  "editorScript": "file:./index.js",
+  "editorStyle": ["file:./index.css", "file:./view.css"],
+  "style": ["file:./style-index.css", "file:./view.css"],
+  "render": "file:./render.php",
+  "viewScript": "file:./view.js"
+}
