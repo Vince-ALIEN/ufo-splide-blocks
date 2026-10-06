@@ -60,14 +60,14 @@ $posts = get_posts($args);
       <?php foreach ($posts as $post) :
         setup_postdata($post);
         $taxonomy_display = !empty($selectedTaxonomy) ? $selectedTaxonomy : 'category';
-        $terms            = wp_get_post_terms($post->ID, $taxonomy_display, ['number' => 1]);
-        $category         = !empty($terms) && !is_wp_error($terms) ? $terms[0] : null;
+        $terms            = wp_get_post_terms($post->ID, $taxonomy_display);
+        $categories       = !empty($terms) && !is_wp_error($terms) ? $terms : [];
         $excerpt          = get_the_excerpt($post->ID);
         // Même troncature que la carte du thème (template-parts/content/content.php) si disponible.
         $excerpt          = function_exists('_ufo_truncate_text') ? _ufo_truncate_text($excerpt, 100) : wp_trim_words($excerpt, 20);
       ?>
         <div class="splide__slide">
-          <article id="post-<?php echo esc_attr($post->ID); ?>" <?php post_class('relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-tertiary px-8 pb-8 min-h-[480px]', $post->ID); ?>>
+          <article id="post-<?php echo esc_attr($post->ID); ?>" <?php post_class('relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-background px-8 pb-8 min-h-[480px]', $post->ID); ?>>
             <?php if (has_post_thumbnail($post->ID)) : ?>
               <?php
               // wp_get_attachment_image ajoute width/height/srcset/sizes → pas de CLS.
@@ -83,22 +83,35 @@ $posts = get_posts($args);
               );
               ?>
             <?php endif; ?>
-            <div class="absolute inset-0 -z-10 bg-linear-to-t from-tertiary via-tertiary/50"></div>
-            <div class="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-tertiary/10"></div>
+            <div class="absolute inset-0 -z-10 bg-linear-to-t from-foreground via-foreground/70"></div>
+            <div class="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-foreground/10"></div>
 
-            <?php if ($showDate || ($showCategory && $category)) : ?>
-              <div class="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm/6 text-white">
+            <?php if ($showDate || ($showCategory && $categories)) : ?>
+              <div class="flex flex-wrap items-center gap-y-1 overflow-hidden text-xs/6 text-white">
                 <?php if ($showDate) : ?>
                   <time datetime="<?php echo esc_attr(get_the_date('c', $post->ID)); ?>" class="mr-8">
                     <?php echo esc_html(get_the_date('', $post->ID)); ?>
                   </time>
                 <?php endif; ?>
-                <?php if ($showCategory && $category) : ?>
-                  <div class="<?php echo $showDate ? '-ml-4 ' : ''; ?>flex items-center gap-x-4">
+                <?php if ($showCategory && $categories) : ?>
+                  <div class="<?php echo $showDate ? '-ml-4 ' : ''; ?>flex flex-wrap items-center gap-x-2 gap-y-1">
                     <?php if ($showDate) : ?>
                       <svg viewBox="0 0 2 2" class="-ml-0.5 size-0.5 flex-none fill-white/50" aria-hidden="true"><circle r="1" cx="1" cy="1" /></svg>
                     <?php endif; ?>
-                    <span><?php echo esc_html($category->name); ?></span>
+                    <?php foreach ($categories as $category) :
+                      /**
+                       * Classes CSS du libellé d'un terme (vide par défaut : texte simple).
+                       * Permet au thème de styliser chaque terme, ex. un badge coloré.
+                       *
+                       * @param string  $class      Classes du <span>.
+                       * @param WP_Term $category   Terme affiché.
+                       * @param WP_Post $post       Publication de la slide.
+                       * @param array   $attributes Attributs du bloc.
+                       */
+                      $term_class = apply_filters('ufo_splide_term_class', '', $category, $post, $attributes);
+                    ?>
+                      <span<?php if ($term_class) : ?> class="<?php echo esc_attr($term_class); ?>"<?php endif; ?>><?php echo esc_html($category->name); ?></span>
+                    <?php endforeach; ?>
                   </div>
                 <?php endif; ?>
               </div>

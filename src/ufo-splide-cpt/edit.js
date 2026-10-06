@@ -203,6 +203,11 @@ export default function Edit({ attributes, setAttributes }) {
               posts.map((post) => {
                 const thumbnail =
                   post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+                const taxonomyDisplay = selectedTaxonomy || "category";
+                const termNames = (post._embedded?.["wp:term"] || [])
+                  .flat()
+                  .filter((term) => term?.taxonomy === taxonomyDisplay)
+                  .map((term) => decodeEntities(term.name));
                 return (
                   <div className="splide__slide" key={post.id}>
                     <article
@@ -222,6 +227,7 @@ export default function Edit({ attributes, setAttributes }) {
                         <img
                           src={thumbnail}
                           alt={post.title.rendered}
+                          className="not-prose"
                           style={{
                             position: "absolute",
                             inset: 0,
@@ -265,16 +271,15 @@ export default function Edit({ attributes, setAttributes }) {
                                 )}
                               </span>
                             )}
-                            {showDate && showCategory &&
-                              post._embedded?.["wp:term"]?.[0]?.[0]?.name && (
+                            {showDate && showCategory && termNames.length > 0 && (
                               <span style={{ color: "rgba(255,255,255,0.3)" }}>
                                 •
                               </span>
                             )}
                             {showCategory &&
-                              post._embedded?.["wp:term"]?.[0]?.[0]?.name && (
-                                <span>{post._embedded["wp:term"][0][0].name}</span>
-                              )}
+                              termNames.map((name) => (
+                                <span key={name}>{name}</span>
+                              ))}
                           </div>
                         )}
                         <h3
