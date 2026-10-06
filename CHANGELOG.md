@@ -3,6 +3,12 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [0.1.10] - 2026-10-06
+
+### Corrigé
+- **Ufo Splide Posts** : `mb-0` sur l'extrait pour neutraliser la marge basse
+  des paragraphes ajoutée par le thème (repris de `new-isd`).
+
 ## [0.1.9] - 2026-10-06
 
 ### Ajouté
@@ -86,5 +92,6 @@ Développée sur `new-isd`.
 
 Non documentées.
 
+[0.1.10]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.9
 [0.1.8]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.8

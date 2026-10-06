@@ -120,7 +120,7 @@ $posts = get_posts($args);
             <h2 class="not-prose mt-3 h-12 line-clamp-2 text-lg/6 font-sans font-semibold text-white">
               <?php echo esc_html(get_the_title($post->ID)); ?>
             </h2>
-            <p class="not-prose mt-2 px-0 line-clamp-2 text-sm/6 text-white">
+            <p class="not-prose mt-2 mb-0 px-0 line-clamp-2 text-sm/6 text-white">
               <?php echo esc_html($excerpt); ?>
             </p>
             <a href="<?php echo esc_url(get_permalink($post->ID)); ?>" class="not-prose mt-4 inline-flex w-fit items-center is-style-primary btn bg-primary text-white hover:bg-primary/80 transition-colors duration-300"<?php if ($cta_style) : ?> style="<?php echo esc_attr($cta_style); ?>"<?php endif; ?>>
