@@ -3,6 +3,18 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [0.1.11] - 2026-10-15
+
+### Modifié
+- **Ufo Splide Posts** : le carrousel n'est monté que lorsqu'il approche de
+  l'écran (`IntersectionObserver`, marge de 300px), dans un
+  `requestAnimationFrame`. Les mesures de mise en page de Splide ne forcent
+  plus de reflow pendant le chargement de la page.
+
+### Supprimé
+- **Ufo Splide Posts** : appel redondant à `Pagination.update()` et ajout
+  manuel de la classe `is-initialized`, déjà gérés par Splide.
+
 ## [0.1.10] - 2026-10-06
 
 ### Corrigé
@@ -92,6 +104,7 @@ Développée sur `new-isd`.
 
 Non documentées.
 
+[0.1.11]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.9
 [0.1.8]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.8
