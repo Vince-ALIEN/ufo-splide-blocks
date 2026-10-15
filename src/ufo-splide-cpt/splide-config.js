@@ -1,6 +1,5 @@
 export const getSplideConfig = (attributes) => {
-  const { slidesPerView, navigation, pagination, autoplay, postsToShow } =
-    attributes;
+  const { slidesPerView, navigation, pagination, autoplay } = attributes;
 
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
@@ -23,12 +22,6 @@ export const getSplideConfig = (attributes) => {
       640: { perPage: 1 },
       768: { perPage: Math.min(2, slidesPerView) },
       1024: { perPage: slidesPerView },
-    },
-    pagination: {
-      el: ".splide__pagination",
-      type: "bullets",
-      clickable: true,
-      items: Math.ceil(postsToShow / slidesPerView),
     },
     focus: "center",
     a11y: {

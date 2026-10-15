@@ -3,6 +3,13 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [0.1.12] - 2026-10-15
+
+### Corrigé
+- **Ufo Splide Posts** : l'option « Pagination » est de nouveau respectée.
+  Un second objet `pagination` (syntaxe Swiper) écrasait le booléen du bloc,
+  si bien que la pagination s'affichait toujours, même désactivée.
+
 ## [0.1.11] - 2026-10-15
 
 ### Modifié
@@ -104,6 +111,7 @@ Développée sur `new-isd`.
 
 Non documentées.
 
+[0.1.12]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.12
 [0.1.11]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.10
 [0.1.9]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.9
