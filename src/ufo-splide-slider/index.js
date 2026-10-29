@@ -26,7 +26,7 @@ import "./style.scss";
 import Edit from "./edit";
 import save from "./save";
 import deprecated from "./deprecated";
-import { carouselBlockIcon } from "./icon";
+import { galleryBlockIcon } from "../icons";
 
 /**
  * Every block starts by registering a new block type definition.
@@ -35,9 +35,9 @@ import { carouselBlockIcon } from "./icon";
  */
 registerBlockType(blockConfig, {
   /**
-   * @see ./icon.js
+   * @see ../icons.js
    */
-  icon: carouselBlockIcon,
+  icon: galleryBlockIcon,
   /**
    * @see ./edit.js
    */

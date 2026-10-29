@@ -3,6 +3,23 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [0.1.14] - 2026-10-29
+
+### Sécurité
+- **Ufo Splide Slider** et **Ufo Splide Posts** : l'attribut `data-splide` est
+  retiré avant le montage de Splide, et seules les options attendues sont
+  transmises. Splide relisait cet attribut, stocké dans le contenu, et insérait
+  certaines options (`arrowPath`, `classes`) en HTML : un contributeur pouvait
+  y glisser du JavaScript (XSS stockée).
+- **Ufo Splide Posts** (`render.php`) : type de contenu et taxonomie limités aux
+  types publics, nombre de publications plafonné à 20 et diapositives par vue
+  à 6, couleurs du bouton limitées à un code hexadécimal ou à une couleur du
+  thème, garde `ABSPATH`.
+
+### Modifié
+- Icône **GalleryHorizontal** (Lucide) pour les trois blocs, en `#EB9188` sur
+  fond `#F6F6F7` comme dans ufo-tools-blocks.
+
 ## [0.1.13] - 2026-10-29
 
 ### Modifié
@@ -118,6 +135,8 @@ Développée sur `new-isd`.
 
 Non documentées.
 
+[0.1.14]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.14
+[0.1.13]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.13
 [0.1.12]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.12
 [0.1.11]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.11
 [0.1.10]: https://github.com/Vince-ALIEN/ufo-splide-blocks/releases/tag/v0.1.10

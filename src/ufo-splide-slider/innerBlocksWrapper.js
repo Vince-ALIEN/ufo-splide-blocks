@@ -1,13 +1,13 @@
 import { __ } from "@wordpress/i18n";
 import { registerBlockType } from "@wordpress/blocks";
 import { useBlockProps, useInnerBlocksProps } from "@wordpress/block-editor";
-import { carouselBlockIcon } from "./icon";
+import { galleryBlockIcon } from "../icons";
 
 registerBlockType("create-block/ufo-slide", {
   apiVersion: 3,
   title: __("Slide", "ufo-splide-blocks"),
   category: "design",
-  icon: carouselBlockIcon,
+  icon: galleryBlockIcon,
   description: __("Adds a slider element", "ufo-splide-blocks"),
   supports: {
     html: false,

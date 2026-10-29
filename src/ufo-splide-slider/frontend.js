@@ -11,15 +11,31 @@ document.addEventListener("DOMContentLoaded", function () {
   if (splideSliders.length > 0) {
     [...splideSliders].forEach((sliderElement) => {
       try {
-        let options = {};
+        let saved = {};
 
         if (sliderElement.dataset.splide) {
           try {
-            options = JSON.parse(sliderElement.dataset.splide);
+            saved = JSON.parse(sliderElement.dataset.splide);
           } catch (e) {
             console.error("Error parsing Splide options:", e);
           }
         }
+
+        // data-splide is stored in the post content, so it is untrusted:
+        // Splide re-reads it on mount and injects some options (arrowPath,
+        // classes) as HTML. Remove it and keep only the options save.js writes.
+        sliderElement.removeAttribute("data-splide");
+
+        const options = {
+          type: saved.type === "fade" ? "fade" : "loop",
+          rewind: !!saved.rewind,
+          perPage: Math.min(Math.max(parseInt(saved.perPage, 10) || 1, 1), 6),
+          perMove: 1,
+          autoplay: !!saved.autoplay,
+          arrows: !!saved.arrows,
+          pagination: !!saved.pagination,
+          drag: true,
+        };
 
         const isFade = options.type === "fade";
 

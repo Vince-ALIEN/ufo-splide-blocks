@@ -3,9 +3,9 @@ import "./style.scss";
 import "@splidejs/splide/css";
 import Edit from "./edit";
 import metadata from "./block.json";
-import { newspaperBlockIcon } from "./icon";
+import { galleryBlockIcon } from "../icons";
 
 registerBlockType(metadata.name, {
-  icon: newspaperBlockIcon,
+  icon: galleryBlockIcon,
   edit: Edit,
 });

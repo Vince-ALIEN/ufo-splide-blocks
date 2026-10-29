@@ -1,5 +1,11 @@
 export const getSplideConfig = (attributes) => {
-  const { slidesPerView, navigation, pagination, autoplay } = attributes;
+  const slidesPerView = Math.min(
+    Math.max(parseInt(attributes.slidesPerView, 10) || 1, 1),
+    6,
+  );
+  const navigation = !!attributes.navigation;
+  const pagination = !!attributes.pagination;
+  const autoplay = !!attributes.autoplay;
 
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",

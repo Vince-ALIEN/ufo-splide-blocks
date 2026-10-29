@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Ufo Tools Splide Blocks
  * Description:       Gutenberg slider blocks powered by Splide.
- * Version:           0.1.13
+ * Version:           0.1.14
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Vincent LASSERRE

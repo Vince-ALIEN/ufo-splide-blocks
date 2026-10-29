@@ -3,19 +3,34 @@
  * @see https://github.com/WordPress/gutenberg/blob/trunk/docs/reference-guides/block-api/block-metadata.md#render
  */
 
+defined('ABSPATH') || exit;
+
 $autoplay          = !empty($attributes['autoplay']);
 $navigation        = !empty($attributes['navigation']);
 $pagination        = !empty($attributes['pagination']);
-$slidesPerView     = !empty($attributes['slidesPerView']) ? $attributes['slidesPerView'] : 1;
-$postsToShow       = $attributes['postsToShow'] ?? 5;
-$postType          = $attributes['postType'] ?? 'post';
-$selectedTaxonomy  = $attributes['selectedTaxonomy'] ?? '';
-$selectedTerms     = $attributes['selectedTerms'] ?? [];
+$slidesPerView     = min(max(absint($attributes['slidesPerView'] ?? 1), 1), 6);
+$postsToShow       = min(max(absint($attributes['postsToShow'] ?? 5), 1), 20);
+$postType          = sanitize_key($attributes['postType'] ?? 'post');
+$selectedTaxonomy  = sanitize_key($attributes['selectedTaxonomy'] ?? '');
+$selectedTerms     = (array) ($attributes['selectedTerms'] ?? []);
 $showDate           = $attributes['showDate'] ?? true;
 $showCategory       = $attributes['showCategory'] ?? true;
 $ctaText            = $attributes['ctaText'] ?? __('En savoir plus', 'ufo-splide-cpt');
-$ctaBackgroundColor = $attributes['ctaBackgroundColor'] ?? '';
-$ctaTextColor       = $attributes['ctaTextColor'] ?? '';
+
+// Seuls les types de contenu et taxonomies publics peuvent être affichés.
+if ('attachment' === $postType || !post_type_exists($postType) || !is_post_type_viewable($postType)) {
+    $postType = 'post';
+}
+if ($selectedTaxonomy && (!is_object_in_taxonomy($postType, $selectedTaxonomy) || !is_taxonomy_viewable($selectedTaxonomy))) {
+    $selectedTaxonomy = '';
+}
+
+// Couleur hexadécimale ou couleur du thème, rien d'autre dans l'attribut style.
+$ufo_splide_color = static function ($value) {
+    return is_string($value) && preg_match('/^(#[0-9a-fA-F]{3,8}|var\(--wp--preset--color--[a-z0-9-]+\))$/', $value) ? $value : '';
+};
+$ctaBackgroundColor = $ufo_splide_color($attributes['ctaBackgroundColor'] ?? '');
+$ctaTextColor       = $ufo_splide_color($attributes['ctaTextColor'] ?? '');
 
 $cta_style = '';
 if ($ctaBackgroundColor) $cta_style .= 'background-color:' . esc_attr($ctaBackgroundColor) . ';';

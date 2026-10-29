@@ -7,7 +7,15 @@ const initSlider = (element) => {
     return;
   }
 
-  const attributes = JSON.parse(element.dataset.splide || "{}");
+  let attributes = {};
+  try {
+    attributes = JSON.parse(element.dataset.splide || "{}");
+  } catch (e) {
+    console.error("Error parsing Splide options:", e);
+  }
+  // Splide re-reads data-splide on mount and injects some options as HTML:
+  // remove it so only the options built by getSplideConfig are used.
+  element.removeAttribute("data-splide");
   const splide = new Splide(element, getSplideConfig(attributes));
 
   splide.on("mounted moved", () => {
