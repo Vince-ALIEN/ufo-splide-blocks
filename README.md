@@ -1,4 +1,4 @@
-# Ufo Splide Blocks
+# Ufo Tools Splide Blocks
 
 Blocs Gutenberg de carrousel basés sur [Splide](https://splidejs.com/), pour les thèmes UFO (Tailwind CSS).
 

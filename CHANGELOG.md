@@ -3,6 +3,13 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [0.1.13] - 2026-10-29
+
+### Modifié
+- Le plugin s'appelle désormais **Ufo Tools Splide Blocks** (en-tête du plugin,
+  `README.md`, `readme.txt`). Les noms et titres des blocs sont inchangés pour
+  préserver la compatibilité des contenus existants.
+
 ## [0.1.12] - 2026-10-15
 
 ### Corrigé
