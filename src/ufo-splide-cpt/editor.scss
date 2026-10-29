@@ -1,7 +1,10 @@
-@import "@splidejs/splide/dist/css/splide.min.css";
+/* =========================================================================
+   ufo-splide-cpt — Styles d'édition Gutenberg
+   Le cadre et l'étiquette viennent de ../shared/editor.scss. L'aperçu des
+   cartes laisse passer le clic jusqu'au bloc, qui est alors sélectionné ;
+   les flèches et la pagination restent utilisables.
+   ========================================================================= */
 
-.wp-block-create-block-ufo-splide-cpt {
-  border: 1px dashed #fa766a;
-  padding: 10px;
-  margin: 0 20px 0 20px;
+.editor-styles-wrapper .ufo-splide-editor .splide__track {
+  pointer-events: none;
 }

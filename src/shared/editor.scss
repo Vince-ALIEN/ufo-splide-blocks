@@ -1,0 +1,80 @@
+/* =========================================================================
+   Cadre d'édition commun aux blocs Splide, sur le modèle de ufo-grid
+   (ufo-tools-blocks) : contour violet, fond léger, étiquette toujours
+   visible qui sélectionne le bloc, et marges qui lui appartiennent (un clic
+   dessus le sélectionne). Éditeur seulement : le site n'a rien de tout ça.
+   ========================================================================= */
+
+.editor-styles-wrapper {
+  --ufo-color-accent: #7c3aed;
+  --ufo-color-grid-frame: rgba(124, 58, 237, 0.55);
+  --ufo-color-grid-bg: rgba(124, 58, 237, 0.06);
+  --ufo-color-cell-frame: rgba(30, 30, 30, 0.25);
+  --ufo-color-cell-bg: #fff;
+  --ufo-grid-space-top: 32px;
+  --ufo-grid-space-bottom: 12px;
+  --ufo-grid-space-x: 12px;
+  --ufo-badge-color: #fff;
+  --ufo-transition: 120ms ease-in-out;
+}
+
+.editor-styles-wrapper .ufo-splide-editor {
+  position: relative;
+  padding: var(--ufo-grid-space-top) var(--ufo-grid-space-x) var(--ufo-grid-space-bottom);
+  outline: 1px dashed var(--ufo-color-grid-frame);
+  outline-offset: 0;
+  background-color: var(--ufo-color-grid-bg);
+  cursor: pointer;
+
+  > * {
+    cursor: auto;
+  }
+
+  &:hover {
+    outline-style: solid;
+  }
+
+  &.is-selected {
+    outline: 2px solid var(--ufo-color-accent);
+  }
+}
+
+/* Étiquette (bouton) qui sélectionne le bloc, y compris depuis un bloc
+   enfant. */
+.editor-styles-wrapper .ufo-splide-editor > .ufo-splide__badge {
+  position: absolute;
+  top: 6px;
+  left: var(--ufo-grid-space-x);
+  z-index: 3;
+  margin: 0;
+  padding: 1px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ufo-color-grid-frame);
+  color: var(--ufo-badge-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color var(--ufo-transition);
+}
+
+.editor-styles-wrapper .ufo-splide-editor:hover > .ufo-splide__badge,
+.editor-styles-wrapper .ufo-splide-editor.is-selected > .ufo-splide__badge,
+.editor-styles-wrapper .ufo-splide-editor > .ufo-splide__badge:focus-visible {
+  background: var(--ufo-color-accent);
+}
+
+@media (forced-colors: active) {
+  .editor-styles-wrapper .ufo-splide-editor {
+    outline-color: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-styles-wrapper .ufo-splide-editor > .ufo-splide__badge {
+    transition: none;
+  }
+}

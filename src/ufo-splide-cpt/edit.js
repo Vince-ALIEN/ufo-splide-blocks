@@ -1,23 +1,44 @@
-import { __ } from "@wordpress/i18n";
+import { __, _n, sprintf } from "@wordpress/i18n";
 import { decodeEntities } from "@wordpress/html-entities";
-import { useBlockProps, InspectorControls, PanelColorSettings } from "@wordpress/block-editor";
 import {
-  PanelBody,
+  useBlockProps,
+  InspectorControls,
+  PanelColorSettings,
+  store as blockEditorStore,
+} from "@wordpress/block-editor";
+import {
   ToggleControl,
   RangeControl,
   SelectControl,
   TextControl,
 } from "@wordpress/components";
-import { useSelect } from "@wordpress/data";
+import { useDispatch, useSelect } from "@wordpress/data";
 import { store as coreStore } from "@wordpress/core-data";
 import { useEffect, useRef } from "@wordpress/element";
 import Splide from "@splidejs/splide";
 import "@splidejs/splide/css";
 import { getSplideConfig } from "./splide-config";
+import metadata from "./block.json";
+import {
+  UfoToolsPanel,
+  PanelItem,
+  getAttributeDefaults,
+} from "../shared/controls";
 import "./style.scss";
+import "../shared/editor.scss";
 import "./editor.scss";
 
-export default function Edit({ attributes, setAttributes }) {
+const DEFAULTS = getAttributeDefaults(metadata);
+const CONTENT_KEYS = [
+  "postType",
+  "postsToShow",
+  "selectedTaxonomy",
+  "selectedTerms",
+];
+const CARD_KEYS = ["showDate", "showCategory", "ctaText"];
+const SLIDER_KEYS = ["autoplay", "navigation", "pagination", "slidesPerView"];
+
+export default function Edit({ attributes, setAttributes, clientId }) {
   const {
     autoplay,
     navigation,
@@ -56,11 +77,9 @@ export default function Edit({ attributes, setAttributes }) {
             )
           : [],
         terms: selectedTaxonomy
-          ? select(coreStore).getEntityRecords(
-              "taxonomy",
-              selectedTaxonomy,
-              { per_page: -1 },
-            )
+          ? select(coreStore).getEntityRecords("taxonomy", selectedTaxonomy, {
+              per_page: -1,
+            })
           : [],
       };
     },
@@ -69,7 +88,13 @@ export default function Edit({ attributes, setAttributes }) {
 
   useEffect(() => {
     if (posts && posts.length > 0 && splideRef.current) {
-      const splide = new Splide(splideRef.current, getSplideConfig(attributes));
+      // Pas de glisser dans l'éditeur : Splide capterait le clic qui
+      // sélectionne le bloc.
+      const splide = new Splide(splideRef.current, {
+        ...getSplideConfig(attributes),
+        drag: false,
+        autoplay: false,
+      });
       splide.mount();
       return () => {
         splide.destroy();
@@ -77,7 +102,20 @@ export default function Edit({ attributes, setAttributes }) {
     }
   }, [posts, attributes]);
 
-  const blockProps = useBlockProps();
+  const { selectBlock } = useDispatch(blockEditorStore);
+  const blockProps = useBlockProps({ className: "ufo-splide-editor" });
+  const postTypeLabel =
+    (postTypes || []).find((t) => t.slug === postType)?.name || postType;
+  const badge = [
+    __("Posts", "ufo-splide-cpt"),
+    postTypeLabel,
+    sprintf(
+      // translators: %d: number of items
+      _n("%d élément", "%d éléments", postsToShow, "ufo-splide-cpt"),
+      postsToShow,
+    ),
+  ].join(" · ");
+  const itemProps = { attributes, defaults: DEFAULTS, setAttributes };
 
   const taxonomyOptions = [
     { value: "", label: __("— Aucun filtre —", "ufo-splide-cpt") },
@@ -95,68 +133,190 @@ export default function Edit({ attributes, setAttributes }) {
   return (
     <div {...blockProps}>
       <InspectorControls>
-        <PanelBody title={__("Contenu", "ufo-splide-cpt")}>
-          <SelectControl
+        <UfoToolsPanel
+          label={__("Contenu", "ufo-splide-cpt")}
+          defaults={DEFAULTS}
+          keys={CONTENT_KEYS}
+          setAttributes={setAttributes}
+        >
+          <PanelItem
+            {...itemProps}
             label={__("Type de contenu", "ufo-splide-cpt")}
-            value={postType}
-            options={(postTypes || []).map((t) => ({
-              value: t.slug,
-              label: t.name,
-            }))}
-            onChange={(value) =>
-              setAttributes({
-                postType: value,
-                selectedTaxonomy: "",
-                selectedTerms: [],
-              })
-            }
-          />
-          <RangeControl
-            label={__("Nombre d'éléments", "ufo-splide-cpt")}
-            value={postsToShow}
-            onChange={(value) => setAttributes({ postsToShow: value })}
-            min={1}
-            max={20}
-          />
-          {taxonomyOptions.length > 1 && (
+            keys={["postType", "selectedTaxonomy", "selectedTerms"]}
+          >
             <SelectControl
-              label={__("Filtrer par taxonomie", "ufo-splide-cpt")}
-              value={selectedTaxonomy}
-              options={taxonomyOptions}
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+              label={__("Type de contenu", "ufo-splide-cpt")}
+              value={postType}
+              options={(postTypes || []).map((t) => ({
+                value: t.slug,
+                label: t.name,
+              }))}
               onChange={(value) =>
-                setAttributes({ selectedTaxonomy: value, selectedTerms: [] })
+                setAttributes({
+                  postType: value,
+                  selectedTaxonomy: "",
+                  selectedTerms: [],
+                })
               }
             />
-          )}
-          {selectedTaxonomy && termOptions.length > 0 && (
-            <SelectControl
-              multiple
-              label={__("Filtrer par termes", "ufo-splide-cpt")}
-              value={selectedTerms.map(String)}
-              options={termOptions}
-              onChange={(value) => setAttributes({ selectedTerms: value })}
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Nombre d'éléments", "ufo-splide-cpt")}
+            keys={["postsToShow"]}
+          >
+            <RangeControl
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+              label={__("Nombre d'éléments", "ufo-splide-cpt")}
+              value={postsToShow}
+              onChange={(value) =>
+                setAttributes({ postsToShow: value ?? DEFAULTS.postsToShow })
+              }
+              min={1}
+              max={20}
             />
+          </PanelItem>
+          {taxonomyOptions.length > 1 && (
+            <PanelItem
+              {...itemProps}
+              label={__("Filtrer par taxonomie", "ufo-splide-cpt")}
+              keys={["selectedTaxonomy", "selectedTerms"]}
+            >
+              <SelectControl
+                __nextHasNoMarginBottom
+                __next40pxDefaultSize
+                label={__("Filtrer par taxonomie", "ufo-splide-cpt")}
+                value={selectedTaxonomy}
+                options={taxonomyOptions}
+                onChange={(value) =>
+                  setAttributes({ selectedTaxonomy: value, selectedTerms: [] })
+                }
+              />
+              {selectedTaxonomy && termOptions.length > 0 && (
+                <SelectControl
+                  __nextHasNoMarginBottom
+                  multiple
+                  label={__("Filtrer par termes", "ufo-splide-cpt")}
+                  value={selectedTerms.map(String)}
+                  options={termOptions}
+                  onChange={(value) => setAttributes({ selectedTerms: value })}
+                />
+              )}
+            </PanelItem>
           )}
-        </PanelBody>
-        <PanelBody title={__("Carte", "ufo-splide-cpt")}>
-          <ToggleControl
-            label={__("Afficher la date", "ufo-splide-cpt")}
-            checked={showDate}
-            onChange={(value) => setAttributes({ showDate: value })}
-          />
-          <ToggleControl
-            label={__("Afficher la catégorie", "ufo-splide-cpt")}
-            checked={showCategory}
-            onChange={(value) => setAttributes({ showCategory: value })}
-          />
-          <TextControl
-            label={__("Texte du bouton CTA", "ufo-splide-cpt")}
-            value={ctaText}
-            onChange={(value) => setAttributes({ ctaText: value })}
-          />
-        </PanelBody>
+        </UfoToolsPanel>
+        <UfoToolsPanel
+          label={__("Carte", "ufo-splide-cpt")}
+          defaults={DEFAULTS}
+          keys={CARD_KEYS}
+          setAttributes={setAttributes}
+        >
+          <PanelItem
+            {...itemProps}
+            label={__("Date", "ufo-splide-cpt")}
+            keys={["showDate"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Afficher la date", "ufo-splide-cpt")}
+              checked={showDate}
+              onChange={(value) => setAttributes({ showDate: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Catégorie", "ufo-splide-cpt")}
+            keys={["showCategory"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Afficher la catégorie", "ufo-splide-cpt")}
+              checked={showCategory}
+              onChange={(value) => setAttributes({ showCategory: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Texte du bouton", "ufo-splide-cpt")}
+            keys={["ctaText"]}
+          >
+            <TextControl
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+              label={__("Texte du bouton", "ufo-splide-cpt")}
+              value={ctaText}
+              onChange={(value) => setAttributes({ ctaText: value })}
+            />
+          </PanelItem>
+        </UfoToolsPanel>
+        <UfoToolsPanel
+          label={__("Slider", "ufo-splide-cpt")}
+          defaults={DEFAULTS}
+          keys={SLIDER_KEYS}
+          setAttributes={setAttributes}
+        >
+          <PanelItem
+            {...itemProps}
+            label={__("Défilement automatique", "ufo-splide-cpt")}
+            keys={["autoplay"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Défilement automatique", "ufo-splide-cpt")}
+              help={__("Désactivé dans l'éditeur.", "ufo-splide-cpt")}
+              checked={autoplay}
+              onChange={(value) => setAttributes({ autoplay: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Flèches", "ufo-splide-cpt")}
+            keys={["navigation"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Flèches précédent / suivant", "ufo-splide-cpt")}
+              checked={navigation}
+              onChange={(value) => setAttributes({ navigation: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Pagination", "ufo-splide-cpt")}
+            keys={["pagination"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Pagination", "ufo-splide-cpt")}
+              checked={pagination}
+              onChange={(value) => setAttributes({ pagination: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Slides par vue", "ufo-splide-cpt")}
+            keys={["slidesPerView"]}
+          >
+            <RangeControl
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+              label={__("Slides par vue", "ufo-splide-cpt")}
+              value={slidesPerView}
+              onChange={(value) =>
+                setAttributes({
+                  slidesPerView: value ?? DEFAULTS.slidesPerView,
+                })
+              }
+              min={1}
+              max={5}
+            />
+          </PanelItem>
+        </UfoToolsPanel>
         <PanelColorSettings
-          title={__("Couleurs du CTA", "ufo-splide-cpt")}
+          title={__("Couleurs du bouton", "ufo-splide-cpt")}
           colorSettings={[
             {
               value: ctaBackgroundColor,
@@ -170,33 +330,23 @@ export default function Edit({ attributes, setAttributes }) {
             },
           ]}
         />
-        <PanelBody title={__("Slider", "ufo-splide-cpt")}>
-          <ToggleControl
-            label={__("Autoplay", "ufo-splide-cpt")}
-            checked={autoplay}
-            onChange={(value) => setAttributes({ autoplay: value })}
-          />
-          <ToggleControl
-            label={__("Navigation", "ufo-splide-cpt")}
-            checked={navigation}
-            onChange={(value) => setAttributes({ navigation: value })}
-          />
-          <ToggleControl
-            label={__("Pagination", "ufo-splide-cpt")}
-            checked={pagination}
-            onChange={(value) => setAttributes({ pagination: value })}
-          />
-          <RangeControl
-            label={__("Slides par vue", "ufo-splide-cpt")}
-            value={slidesPerView}
-            onChange={(value) => setAttributes({ slidesPerView: value })}
-            min={1}
-            max={5}
-          />
-        </PanelBody>
       </InspectorControls>
 
-      <div className="splide" ref={splideRef}>
+      <button
+        type="button"
+        className="ufo-splide__badge"
+        onClick={() => selectBlock(clientId)}
+        aria-label={__("Sélectionner le carrousel", "ufo-splide-cpt")}
+      >
+        {badge}
+      </button>
+      {/* Splide garde le focus pour lui : le clic sur l'aperçu sélectionne
+          le bloc explicitement. */}
+      <div
+        className="splide"
+        ref={splideRef}
+        onClick={() => selectBlock(clientId)}
+      >
         <div className="splide__track">
           <div className="splide__list">
             {posts &&
@@ -271,11 +421,15 @@ export default function Edit({ attributes, setAttributes }) {
                                 )}
                               </span>
                             )}
-                            {showDate && showCategory && termNames.length > 0 && (
-                              <span style={{ color: "rgba(255,255,255,0.3)" }}>
-                                •
-                              </span>
-                            )}
+                            {showDate &&
+                              showCategory &&
+                              termNames.length > 0 && (
+                                <span
+                                  style={{ color: "rgba(255,255,255,0.3)" }}
+                                >
+                                  •
+                                </span>
+                              )}
                             {showCategory &&
                               termNames.map((name) => (
                                 <span key={name}>{name}</span>
@@ -311,14 +465,19 @@ export default function Edit({ attributes, setAttributes }) {
                           }}
                         >
                           {decodeEntities(
-                            (post.excerpt?.rendered || "").replace(/<[^>]+>/g, "")
+                            (post.excerpt?.rendered || "").replace(
+                              /<[^>]+>/g,
+                              "",
+                            ),
                           )}
                         </p>
                         <span
                           style={{
                             display: "inline-block",
                             padding: "0.5rem 1.25rem",
-                            backgroundColor: ctaBackgroundColor || "var(--wp--preset--color--primary, #6366f1)",
+                            backgroundColor:
+                              ctaBackgroundColor ||
+                              "var(--wp--preset--color--primary, #6366f1)",
                             color: ctaTextColor || "#fff",
                             borderRadius: "9999px",
                             fontSize: "0.875rem",

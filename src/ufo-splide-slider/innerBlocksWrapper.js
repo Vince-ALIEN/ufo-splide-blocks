@@ -1,6 +1,11 @@
-import { __ } from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 import { registerBlockType } from "@wordpress/blocks";
-import { useBlockProps, useInnerBlocksProps } from "@wordpress/block-editor";
+import {
+  useBlockProps,
+  useInnerBlocksProps,
+  store as blockEditorStore,
+} from "@wordpress/block-editor";
+import { useDispatch, useSelect } from "@wordpress/data";
 import { galleryBlockIcon } from "../icons";
 
 registerBlockType("create-block/ufo-slide", {
@@ -29,9 +34,15 @@ registerBlockType("create-block/ufo-slide", {
       },
     },
   },
-  edit: ({ attributes, setAttributes }) => {
+  edit: ({ attributes, clientId }) => {
+    const { selectBlock } = useDispatch(blockEditorStore);
+    const index = useSelect(
+      (select) => select(blockEditorStore).getBlockIndex(clientId),
+      [clientId],
+    );
+
     const blockProps = useBlockProps({
-      className: "splide__slide",
+      className: "splide__slide ufo-slide-editor",
       style: {
         backgroundColor: attributes.backgroundColor,
         padding: `${attributes.padding.top} ${attributes.padding.right} ${attributes.padding.bottom} ${attributes.padding.left}`,
@@ -49,15 +60,37 @@ registerBlockType("create-block/ufo-slide", {
       "ufo-blocks/ufo-grid",
     ];
 
-    const TEMPLATE = [["ufo-blocks/ufo-grid"]];
+    // Grille d'une colonne avec sa cellule : une grille vide affiche le
+    // sélecteur de disposition de Ufo Grid à la place de la slide.
+    const TEMPLATE = [
+      ["ufo-blocks/ufo-grid", { columnsCount: 1 }, [["ufo-blocks/ufo-row"]]],
+    ];
 
-    const innerBlocksProps = useInnerBlocksProps(blockProps, {
+    const { children, ...innerBlocksProps } = useInnerBlocksProps(blockProps, {
       allowedBlocks: ALLOWED_BLOCKS,
       template: TEMPLATE,
       templateLock: false,
     });
 
-    return <div {...innerBlocksProps} />;
+    // Éditeur seulement : étiquette qui sélectionne la slide, souvent
+    // impossible à atteindre au clic quand la grille la remplit.
+    return (
+      <div {...innerBlocksProps}>
+        <button
+          type="button"
+          className="ufo-slide__badge"
+          onClick={() => selectBlock(clientId)}
+          aria-label={__("Sélectionner la slide", "ufo-splide-blocks")}
+        >
+          {sprintf(
+            // translators: %d: slide number
+            __("Slide %d", "ufo-splide-blocks"),
+            index + 1,
+          )}
+        </button>
+        {children}
+      </div>
+    );
   },
   save: ({ attributes }) => {
     const blockProps = useBlockProps.save({

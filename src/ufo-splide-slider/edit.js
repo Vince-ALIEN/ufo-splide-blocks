@@ -1,247 +1,296 @@
-import { __, sprintf } from "@wordpress/i18n";
+import { __, _n, sprintf } from "@wordpress/i18n";
 import {
   useBlockProps,
   useInnerBlocksProps,
-  InnerBlocks,
+  BlockControls,
   InspectorControls,
   store as blockEditorStore,
 } from "@wordpress/block-editor";
+import { createBlocksFromInnerBlocksTemplate } from "@wordpress/blocks";
 import {
-  PanelBody,
   ToggleControl,
   RangeControl,
   Button,
+  ToolbarGroup,
+  ToolbarButton,
 } from "@wordpress/components";
-import { useEffect, useRef, useState } from "@wordpress/element";
-import { useSelect } from "@wordpress/data";
-import { chevronLeft, chevronRight } from "@wordpress/icons";
-import Splide from "@splidejs/splide";
+import { useEffect, useState } from "@wordpress/element";
+import { useDispatch, useSelect } from "@wordpress/data";
+import { chevronLeft, chevronRight, plus } from "@wordpress/icons";
+import metadata from "./block.json";
+import {
+  UfoToolsPanel,
+  PanelItem,
+  getAttributeDefaults,
+} from "../shared/controls";
+import "../shared/editor.scss";
 import "./editor.scss";
 
+const DEFAULTS = getAttributeDefaults(metadata);
+const SLIDER_KEYS = [
+  "autoplay",
+  "navigation",
+  "pagination",
+  "fadeEffect",
+  "slidesPerView",
+];
+
+const ALLOWED_BLOCKS = ["create-block/ufo-slide"];
+// Grille d'une colonne avec sa cellule : une grille vide affiche le
+// sélecteur de disposition de Ufo Grid à la place de la slide.
+const SLIDE_GRID = [
+  "ufo-blocks/ufo-grid",
+  { columnsCount: 1 },
+  [["ufo-blocks/ufo-row"]],
+];
+const SLIDE = ["create-block/ufo-slide", {}, [SLIDE_GRID]];
+const TEMPLATE = [SLIDE, SLIDE, SLIDE];
+
+/**
+ * L'éditeur ne monte pas Splide : en boucle, il clone les slides (clones
+ * impossibles à éditer) et capte les clics. Les slides sont affichées côte
+ * à côte, `perView` à la fois, avec une navigation précédent / suivant.
+ */
 export default function Edit({ attributes, setAttributes, clientId }) {
   const { autoplay, navigation, pagination, slidesPerView, fadeEffect } =
     attributes;
-  const splideRef = useRef(null);
-  const splideInstance = useRef(null);
-  const blockProps = useBlockProps();
-  const [activeSlide, setActiveSlide] = useState(0);
+  const perView = fadeEffect ? 1 : Math.max(1, slidesPerView || 1);
+  const [first, setFirst] = useState(0);
+  const { selectBlock, insertBlocks } = useDispatch(blockEditorStore);
 
-  const slideCount = useSelect(
-    (select) =>
-      select(blockEditorStore).getBlockOrder(clientId).length || 1,
+  const { slideCount, selectedSlide } = useSelect(
+    (select) => {
+      const { getBlockOrder, getSelectedBlockClientId, getBlockParents } =
+        select(blockEditorStore);
+      const order = getBlockOrder(clientId);
+      const selected = getSelectedBlockClientId();
+      // Index de la slide qui contient le bloc sélectionné, -1 sinon.
+      const chain = selected
+        ? [selected, ...getBlockParents(selected, true)]
+        : [];
+      const index = chain.reduce(
+        (found, id) => (found >= 0 ? found : order.indexOf(id)),
+        -1,
+      );
+      return { slideCount: order.length, selectedSlide: index };
+    },
     [clientId],
   );
 
+  const maxFirst = Math.max(0, slideCount - perView);
+  const start = Math.min(first, maxFirst);
+
+  // Affiche la slide du bloc sélectionné (vue en liste, ajout d'une slide).
   useEffect(() => {
-    if (activeSlide > slideCount - 1) {
-      setActiveSlide(Math.max(0, slideCount - 1));
+    if (
+      selectedSlide >= 0 &&
+      (selectedSlide < start || selectedSlide >= start + perView)
+    ) {
+      setFirst(Math.min(selectedSlide, maxFirst));
     }
-  }, [slideCount, activeSlide]);
+  }, [selectedSlide]);
 
-  const ALLOWED_BLOCKS = ["create-block/ufo-slide"];
-  const TEMPLATE = [
-    ["create-block/ufo-slide", {}, [["ufo-blocks/ufo-grid"]]],
-    ["create-block/ufo-slide", {}, [["ufo-blocks/ufo-grid"]]],
-    ["create-block/ufo-slide", {}, [["ufo-blocks/ufo-grid"]]],
-  ];
-
+  const blockProps = useBlockProps({ className: "ufo-splide-editor" });
   const innerBlocksProps = useInnerBlocksProps(
     {
-      className: "splide__list edit-mode",
-      ...(fadeEffect ? { "data-active-slide": activeSlide + 1 } : {}),
+      className: "ufo-splide__list",
+      style: { "--ufo-splide-per-view": perView },
     },
     {
       allowedBlocks: ALLOWED_BLOCKS,
       template: TEMPLATE,
       orientation: "horizontal",
-      renderAppender: InnerBlocks.ButtonBlockAppender,
+      // Un « + » dans la liste prendrait la place d'une slide : les slides
+      // s'ajoutent depuis la barre d'outils, comme les cellules de ufo-grid.
+      renderAppender: false,
     },
   );
 
-  useEffect(() => {
-    // The fade effect positions inactive slides with opacity/absolute
-    // positioning, which fights with InnerBlocks editing (selecting a block
-    // inside a non-active slide makes it disappear). Skip the live carousel
-    // for fade and rely on the static "all slides visible" editor CSS
-    // instead; it stays available for the regular loop mode, where it
-    // doesn't hide any slide content.
-    if (fadeEffect) {
-      return;
-    }
+  // La nouvelle slide est sélectionnée, et donc affichée (voir plus haut).
+  const addSlide = () =>
+    insertBlocks(
+      createBlocksFromInnerBlocksTemplate([SLIDE]),
+      undefined,
+      clientId,
+    );
 
-    const initSplide = () => {
-      if (splideRef.current) {
-        if (splideInstance.current) {
-          splideInstance.current.destroy();
-        }
+  // Slides hors de la vue masquées par position (ce sont les blocs enfants,
+  // rendus par InnerBlocks : pas de prop à leur passer).
+  const slideSelector = `#block-${clientId} > .ufo-splide__list > .wp-block-create-block-ufo-slide`;
+  const hidden = [`${slideSelector}:nth-child(n+${start + perView + 1})`];
+  if (start > 0) {
+    hidden.push(`${slideSelector}:nth-child(-n+${start})`);
+  }
 
-        const options = {
-          type: "loop",
-          perPage: slidesPerView,
-          perMove: 1,
-          autoplay: autoplay,
-          arrows: navigation,
-          pagination: pagination,
-          speed: 600,
-          easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-          interval: 3000,
-          drag: false,
-          noDrag: true,
-          a11y: {
-            // Enhanced accessibility options
-            container: "region",
-            items: "group",
-            slideRole: "group",
-            live: true,
-            next: "Next slide",
-            prev: "Previous slide",
-            select: "Select slide",
-          },
-          breakpoints: {
-            640: {
-              perPage: 1,
-            },
-            768: {
-              perPage: Math.min(2, slidesPerView),
-            },
-            1024: {
-              perPage: slidesPerView,
-            },
-          },
-          direction: "ltr",
-        };
+  const badge = [
+    __("Slider", "ufo-splide-blocks"),
+    sprintf(
+      // translators: %d: number of slides
+      _n("%d slide", "%d slides", slideCount, "ufo-splide-blocks"),
+      slideCount,
+    ),
+    fadeEffect
+      ? __("fondu", "ufo-splide-blocks")
+      : sprintf(
+          // translators: %d: slides per view
+          __("%d par vue", "ufo-splide-blocks"),
+          perView,
+        ),
+  ].join(" · ");
 
-        try {
-          splideInstance.current = new Splide(splideRef.current, options);
+  const last = Math.min(start + perView, slideCount);
+  const navLabel =
+    perView === 1
+      ? sprintf(
+          // translators: 1: current slide number, 2: total number of slides
+          __("Slide %1$d sur %2$d", "ufo-splide-blocks"),
+          start + 1,
+          slideCount,
+        )
+      : sprintf(
+          // translators: 1: first visible slide, 2: last visible slide, 3: total
+          __("Slides %1$d à %2$d sur %3$d", "ufo-splide-blocks"),
+          start + 1,
+          last,
+          slideCount,
+        );
 
-          // Fix focus management
-          splideInstance.current.on("mounted moved", () => {
-            const slides = splideInstance.current.Components.Elements.slides;
-            slides.forEach((slide) => {
-              // Remove aria-hidden from slides
-              slide.removeAttribute("aria-hidden");
-
-              // Add proper focus management
-              const focusableElements = slide.querySelectorAll(
-                'a[href], button, input, textarea, select, [tabindex]:not([tabindex="-1"])',
-              );
-
-              focusableElements.forEach((element) => {
-                if (!slide.classList.contains("is-active")) {
-                  element.setAttribute("tabindex", "-1");
-                } else {
-                  element.removeAttribute("tabindex");
-                }
-              });
-            });
-          });
-
-          splideInstance.current.mount();
-        } catch (e) {
-          console.error("Splide initialization error:", e);
-        }
-      }
-    };
-
-    const timer = setTimeout(initSplide, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (splideInstance.current) {
-        splideInstance.current.destroy();
-        splideInstance.current = null;
-      }
-    };
-  }, [autoplay, navigation, pagination, slidesPerView, fadeEffect]);
+  const itemProps = { attributes, defaults: DEFAULTS, setAttributes };
 
   return (
     <>
+      <BlockControls group="other">
+        <ToolbarGroup>
+          <ToolbarButton
+            icon={plus}
+            label={__("Ajouter une slide", "ufo-splide-blocks")}
+            onClick={addSlide}
+          />
+        </ToolbarGroup>
+      </BlockControls>
       <InspectorControls>
-        <PanelBody title={__("Slider Settings", "ufo-splide-blocks")}>
-          <ToggleControl
-            label={__("Autoplay", "ufo-splide-blocks")}
-            checked={autoplay}
-            onChange={(value) => setAttributes({ autoplay: value })}
-          />
-          <ToggleControl
-            label={__("Show Navigation", "ufo-splide-blocks")}
-            checked={navigation}
-            onChange={(value) => setAttributes({ navigation: value })}
-          />
-          <ToggleControl
-            label={__("Show Pagination", "ufo-splide-blocks")}
-            checked={pagination}
-            onChange={(value) => setAttributes({ pagination: value })}
-          />
-          <ToggleControl
-            label={__("Fade Effect", "ufo-splide-blocks")}
-            help={__(
-              "Crossfades between slides instead of sliding. Only shows one slide at a time.",
-              "ufo-splide-blocks",
-            )}
-            checked={fadeEffect}
-            onChange={(value) => setAttributes({ fadeEffect: value })}
-          />
-          <RangeControl
-            label={__("Slides Per View", "ufo-splide-blocks")}
-            value={slidesPerView}
-            onChange={(value) => setAttributes({ slidesPerView: value })}
-            min={1}
-            max={6}
-            disabled={fadeEffect}
-          />
-        </PanelBody>
+        <UfoToolsPanel
+          label={__("Slider", "ufo-splide-blocks")}
+          defaults={DEFAULTS}
+          keys={SLIDER_KEYS}
+          setAttributes={setAttributes}
+        >
+          <PanelItem
+            {...itemProps}
+            label={__("Défilement automatique", "ufo-splide-blocks")}
+            keys={["autoplay"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Défilement automatique", "ufo-splide-blocks")}
+              checked={autoplay}
+              onChange={(value) => setAttributes({ autoplay: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Flèches", "ufo-splide-blocks")}
+            keys={["navigation"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Flèches précédent / suivant", "ufo-splide-blocks")}
+              checked={navigation}
+              onChange={(value) => setAttributes({ navigation: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Pagination", "ufo-splide-blocks")}
+            keys={["pagination"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Pagination", "ufo-splide-blocks")}
+              checked={pagination}
+              onChange={(value) => setAttributes({ pagination: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Fondu", "ufo-splide-blocks")}
+            keys={["fadeEffect"]}
+          >
+            <ToggleControl
+              __nextHasNoMarginBottom
+              label={__("Transition en fondu", "ufo-splide-blocks")}
+              help={__(
+                "Une seule slide à la fois, qui apparaît en fondu au lieu de glisser.",
+                "ufo-splide-blocks",
+              )}
+              checked={fadeEffect}
+              onChange={(value) => setAttributes({ fadeEffect: value })}
+            />
+          </PanelItem>
+          <PanelItem
+            {...itemProps}
+            label={__("Slides par vue", "ufo-splide-blocks")}
+            keys={["slidesPerView"]}
+          >
+            <RangeControl
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+              label={__("Slides par vue", "ufo-splide-blocks")}
+              value={slidesPerView}
+              onChange={(value) =>
+                setAttributes({
+                  slidesPerView: value ?? DEFAULTS.slidesPerView,
+                })
+              }
+              min={1}
+              max={6}
+              disabled={fadeEffect}
+              help={__(
+                "À partir de 1024px. 2 au plus entre 768 et 1024px, 1 en dessous.",
+                "ufo-splide-blocks",
+              )}
+            />
+          </PanelItem>
+        </UfoToolsPanel>
       </InspectorControls>
       <div {...blockProps}>
-        {fadeEffect && (
-          <div className="splide__edit-nav">
-            <Button
-              icon={chevronLeft}
-              label={__("Previous slide", "ufo-splide-blocks")}
-              onClick={() => setActiveSlide((i) => Math.max(0, i - 1))}
-              disabled={activeSlide === 0}
-            />
-            <span className="splide__edit-nav-label">
-              {sprintf(
-                // translators: 1: current slide number, 2: total number of slides
-                __("Slide %1$d of %2$d", "ufo-splide-blocks"),
-                activeSlide + 1,
-                slideCount,
-              )}
-            </span>
-            <Button
-              icon={chevronRight}
-              label={__("Next slide", "ufo-splide-blocks")}
-              onClick={() =>
-                setActiveSlide((i) => Math.min(slideCount - 1, i + 1))
-              }
-              disabled={activeSlide >= slideCount - 1}
-            />
-          </div>
-        )}
-        <div
-          className={
-            fadeEffect
-              ? "splide splide--edit-mode splide--static-preview"
-              : "splide splide--edit-mode"
-          }
-          ref={splideRef}
-          role="region"
-          aria-label={__("Slider", "ufo-splide-blocks")}
-          data-splide={JSON.stringify({
-            type: fadeEffect ? "fade" : "loop",
-            rewind: fadeEffect,
-            perPage: fadeEffect ? 1 : slidesPerView,
-            autoplay: autoplay,
-            arrows: navigation,
-            pagination: pagination,
-            drag: false,
-          })}
+        <button
+          type="button"
+          className="ufo-splide__badge"
+          onClick={() => selectBlock(clientId)}
+          aria-label={__("Sélectionner le slider", "ufo-splide-blocks")}
         >
-          <div className="splide__track">
-            <div {...innerBlocksProps} role="presentation" />
-          </div>
+          {badge}
+        </button>
+        <style>{`${hidden.join(",")}{display:none}`}</style>
+        <div className="ufo-splide__edit-nav">
+          {slideCount > perView && (
+            <>
+              <Button
+                size="small"
+                icon={chevronLeft}
+                label={__("Précédent", "ufo-splide-blocks")}
+                onClick={() => setFirst(Math.max(0, start - 1))}
+                disabled={start === 0}
+              />
+              <span className="ufo-splide__edit-nav-label">{navLabel}</span>
+              <Button
+                size="small"
+                icon={chevronRight}
+                label={__("Suivant", "ufo-splide-blocks")}
+                onClick={() => setFirst(Math.min(maxFirst, start + 1))}
+                disabled={start >= maxFirst}
+              />
+            </>
+          )}
+          <Button
+            size="small"
+            icon={plus}
+            label={__("Ajouter une slide", "ufo-splide-blocks")}
+            onClick={addSlide}
+          />
         </div>
+        <div {...innerBlocksProps} />
       </div>
     </>
   );

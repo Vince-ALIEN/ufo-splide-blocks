@@ -3,6 +3,26 @@
 Toutes les évolutions notables de ce plugin sont documentées ici.
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [Non publié]
+
+### Modifié
+- **Éditeur** : cadre, étiquette et marges sur le modèle de Ufo Grid
+  (ufo-tools-blocks) pour Ufo Splide Slider, Ufo Splide Posts et Slide.
+  L'étiquette et les marges sélectionnent le bloc ; un clic sur l'aperçu de
+  Ufo Splide Posts aussi.
+- **Ufo Splide Slider** (éditeur) : Splide n'est plus monté dans l'éditeur.
+  Les slides s'affichent côte à côte, autant que « Slides par vue », avec une
+  navigation précédent / suivant et un bouton « Ajouter une slide » (barre
+  d'outils). Les cellules d'une grille de slide s'alignent sur celles d'une
+  Ufo Grid hors slider.
+- **Ufo Splide Slider** : chaque nouvelle slide contient une Ufo Grid d'une
+  colonne avec sa cellule, au lieu d'une grille vide qui affichait le
+  sélecteur de disposition.
+- **Ufo Splide Posts** (éditeur) : pas de glisser ni de défilement
+  automatique dans l'aperçu.
+- **Inspecteur** : réglages en français, dans des ToolsPanel avec
+  réinitialisation, comme ufo-tools-blocks.
+
 ## [0.1.14] - 2026-10-29
 
 ### Sécurité
